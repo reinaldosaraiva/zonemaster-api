@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.create_table('dns_checks',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('domain', sa.String(length=255), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('current_timestamp'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_dns_checks_domain'), 'dns_checks', ['domain'], unique=False)
