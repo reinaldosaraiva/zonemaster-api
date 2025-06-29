@@ -8,4 +8,19 @@ wheels/
 
 # Virtual environments
 .venv
+
+
+# Ignore cloned zonemaster-backend repository
 zonemaster-backend/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
