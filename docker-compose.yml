@@ -31,7 +31,7 @@ services:
   api:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - DEBUG=true
       - DATABASE_URL=postgresql+asyncpg://user:password@db/dns_health
