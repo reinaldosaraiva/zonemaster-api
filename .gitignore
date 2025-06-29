@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
+
 # Ignore cloned zonemaster-backend repository
 zonemaster-backend/
 
