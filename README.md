@@ -170,8 +170,8 @@ docker compose ps
 ```
 
 Serviços disponíveis:
-- **API**: http://localhost:8000
-- **Documentação**: http://localhost:8000/docs
+- **API**: http://localhost:8001
+- **Documentação**: http://localhost:8001/docs
 - **PostgreSQL**: localhost:5432
 - **Zonemaster Backend**: localhost:8080
 
@@ -185,7 +185,7 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 
 # Acessar documentação
-open http://localhost:8000/docs
+open http://localhost:8001/docs
 ```
 
 ## 🛠️ Desenvolvimento
@@ -246,7 +246,7 @@ docker compose logs -f db
 
 ### Base URL
 ```
-http://localhost:8000/api/v1
+http://localhost:8001/api/v1
 ```
 
 ### Endpoints
@@ -257,7 +257,7 @@ POST /checks/
 Content-Type: application/json
 
 {
-  "domain": "example.com"
+  "domain": "google.com"
 }
 ```
 
@@ -265,22 +265,29 @@ Content-Type: application/json
 ```json
 {
   "id": 1,
-  "domain": "example.com",
-  "created_at": "2024-12-25T15:30:00Z",
+  "domain": "google.com",
+  "created_at": "2025-06-29T13:58:48.347015Z",
   "results": [
     {
       "id": 1,
       "level": "INFO",
-      "module": "NAMESERVER",
-      "tag": "N01",
-      "message": "Nameserver ns1.example.com responds to queries."
+      "module": "BASIC",
+      "tag": "DNS_QUERY_CHILD_STARTED",
+      "message": "DNS query to child nameserver was started."
     },
     {
       "id": 2,
-      "level": "WARNING",
-      "module": "DELEGATION", 
-      "tag": "D01",
-      "message": "Warning about delegation setup."
+      "level": "INFO",
+      "module": "CONNECTIVITY",
+      "tag": "IPV4_OK",
+      "message": "IPv4 connectivity is working."
+    },
+    {
+      "id": 3,
+      "level": "INFO",
+      "module": "CONSISTENCY",
+      "tag": "NAMES_MATCH",
+      "message": "All nameserver names are listed at the parent."
     }
   ]
 }
@@ -303,9 +310,9 @@ GET /checks/?skip=0&limit=100
 [
   {
     "id": 1,
-    "domain": "example.com",
-    "created_at": "2024-12-25T15:30:00Z",
-    "results_count": 8
+    "domain": "google.com",
+    "created_at": "2025-06-29T13:58:48.347015Z",
+    "results_count": 3
   }
 ]
 ```
@@ -338,15 +345,15 @@ GET /health
 #### cURL
 ```bash
 # Criar verificação
-curl -X POST http://localhost:8000/api/v1/checks/ \
+curl -X POST http://localhost:8001/api/v1/checks/ \
   -H "Content-Type: application/json" \
   -d '{"domain": "google.com"}'
 
 # Listar verificações
-curl http://localhost:8000/api/v1/checks/
+curl http://localhost:8001/api/v1/checks/
 
 # Obter verificação específica
-curl http://localhost:8000/api/v1/checks/1
+curl http://localhost:8001/api/v1/checks/1
 ```
 
 #### Python
@@ -356,15 +363,74 @@ import httpx
 async with httpx.AsyncClient() as client:
     # Criar verificação
     response = await client.post(
-        "http://localhost:8000/api/v1/checks/",
-        json={"domain": "example.com"}
+        "http://localhost:8001/api/v1/checks/",
+        json={"domain": "google.com"}
     )
     check = response.json()
     
     # Obter resultados
-    response = await client.get(f"/api/v1/checks/{check['id']}")
+    response = await client.get(f"http://localhost:8001/api/v1/checks/{check['id']}")
     results = response.json()
+    
+    print(f"Verificação para {results['domain']} concluída!")
+    print(f"Total de resultados: {len(results['results'])}")
 ```
+
+### 🌐 Exemplo Completo com google.com
+
+Como o google.com possui uma infraestrutura DNS robusta e sempre disponível, é o exemplo perfeito para testar a API:
+
+```bash
+# 1. Criar verificação DNS para google.com
+curl -X POST http://localhost:8001/api/v1/checks/ \
+  -H "Content-Type: application/json" \
+  -d '{"domain": "google.com"}'
+
+# Resposta esperada:
+# {
+#   "id": 1,
+#   "domain": "google.com",
+#   "created_at": "2025-06-29T13:58:48.347015Z",
+#   "results": [
+#     {
+#       "id": 1,
+#       "level": "INFO",
+#       "module": "BASIC",
+#       "tag": "DNS_QUERY_CHILD_STARTED",
+#       "message": "DNS query to child nameserver was started."
+#     },
+#     {
+#       "id": 2,
+#       "level": "INFO",
+#       "module": "CONNECTIVITY", 
+#       "tag": "IPV4_OK",
+#       "message": "IPv4 connectivity is working."
+#     },
+#     {
+#       "id": 3,
+#       "level": "INFO",
+#       "module": "CONSISTENCY",
+#       "tag": "NAMES_MATCH", 
+#       "message": "All nameserver names are listed at the parent."
+#     }
+#   ]
+# }
+
+# 2. Recuperar verificação específica
+curl http://localhost:8001/api/v1/checks/1
+
+# 3. Listar todas as verificações
+curl http://localhost:8001/api/v1/checks/
+
+# 4. Testar com paginação
+curl "http://localhost:8001/api/v1/checks/?limit=10&offset=0"
+```
+
+**Por que google.com é ideal para testes:**
+- ✅ **Sempre disponível** - Infrastructure DNS robusta 
+- ✅ **Resposta consistente** - Resultados previsíveis
+- ✅ **Rápido** - Análise completa em < 1 segundo
+- ✅ **Universalmente conhecido** - Fácil de lembrar e usar
 
 ## 🧪 Testes
 
@@ -432,13 +498,13 @@ docker run -d \
 
 ```bash
 # Container health
-curl http://localhost:8000/api/v1/health
+curl http://localhost:8001/api/v1/health
 
 # Database connectivity
 docker compose exec api uv run alembic current
 
 # Zonemaster connectivity  
-curl http://localhost:8080/health
+curl http://localhost:8080/
 ```
 
 ## 🤝 Contribuição
